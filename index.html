@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Smart Trash Bin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            min-height: 100vh;
+        }
+
+        header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 26px;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .unit {
+            font-size: 18px;
+            color: #777;
+            font-weight: normal;
+        }
+
+        .card-1 .card-value { color: #f28b82; } /* Warna merah muda / sensor 1 */
+        .card-2 .card-value { color: #e53935; } /* Warna merah / sensor 2 */
+        .card-3 .card-value { color: #29b6f6; } /* Warna biru jarak 1 */
+        .card-4 .card-value { color: #0288d1; } /* Warna biru jarak 2 */
+
+        footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🗑️ Smart Trash Bin</h1>
+        <div class="status-badge" id="live-status">● Live Updates</div>
+    </header>
+
+    <div class="grid-container">
+        <!-- Card 1: % Sensor 1 -->
+        <div class="card card-1">
+            <div class="card-title">% Sensor 1</div>
+            <div class="card-value"><span id="sensor1">--</span> <span class="unit">%</span></div>
+        </div>
+
+        <!-- Card 2: % Sensor 2 -->
+        <div class="card card-2">
+            <div class="card-title">% Sensor 2</div>
+            <div class="card-value"><span id="sensor2">--</span> <span class="unit">%</span></div>
+        </div>
+
+        <!-- Card 3: Jarak Sensor 1 -->
+        <div class="card card-3">
+            <div class="card-title">Jarak Sensor 1</div>
+            <div class="card-value"><span id="jarak1">--</span> <span class="unit">cm</span></div>
+        </div>
+
+        <!-- Card 4: Jarak Sensor 2 -->
+        <div class="card card-4">
+            <div class="card-title">Jarak Sensor 2</div>
+            <div class="card-value"><span id="jarak2">--</span> <span class="unit">cm</span></div>
+        </div>
+    </div>
+
+    <footer>
+        Diperbarui otomatis setiap 2 detik dari Blynk Cloud API
+    </footer>
+
+    <script>
+        // Auth Token dari akun Blynk kamu
+        const AUTH_TOKEN = "hTkCZR5zNIES1GvsHOWq1WjAN9gxZ7Gx";
+
+        // VIRTUAL PIN (Ubah v0, v1, v2, v3 jika urutan pin di Blynk kamu berbeda)
+        const PIN_PERCENT_1 = "v0"; // Pin % Sensor 1
+        const PIN_PERCENT_2 = "v1"; // Pin % Sensor 2
+        const PIN_JARAK_1   = "v2"; // Pin Jarak Sensor 1
+        const PIN_JARAK_2   = "v3"; // Pin Jarak Sensor 2
+
+        async function fetchPinData(vPin, elementId) {
+            try {
+                const response = await fetch(`https://blynk.cloud/external/api/get?token=${AUTH_TOKEN}&${vPin}`);
+                if (response.ok) {
+                    const data = await response.text();
+                    document.getElementById(elementId).innerText = parseFloat(data).toFixed(2);
+                } else {
+                    document.getElementById(elementId).innerText = "Err";
+                }
+            } catch (error) {
+                console.error(`Gagal mengambil data ${vPin}:`, error);
+                document.getElementById(elementId).innerText = "Offline";
+            }
+        }
+
+        function updateAllData() {
+            fetchPinData(PIN_PERCENT_1, "sensor1");
+            fetchPinData(PIN_PERCENT_2, "sensor2");
+            fetchPinData(PIN_JARAK_1,   "jarak1");
+            fetchPinData(PIN_JARAK_2,   "jarak2");
+        }
+
+        // Ambil data pertama kali & set interval 2000ms (2 detik)
+        updateAllData();
+        setInterval(updateAllData, 2000);
+    </script>
+</body>
+</html>
